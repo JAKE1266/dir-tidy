@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dir-tidy"
+version = "0.1.0"
+description = "规则驱动的目录整理器：dry-run 预览、自定义规则、冲突安全、一键回滚"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+keywords = ["file organizer", "tidy", "目录整理", "downloads"]
+
+[project.scripts]
+dirtidy = "dir_tidy.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["dir_tidy*"]
