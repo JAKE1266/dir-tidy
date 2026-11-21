@@ -1,5 +1,11 @@
 # dir-tidy
 
+![Python](https://img.shields.io/badge/python-3.8%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Tests](https://img.shields.io/badge/tests-18%20passing-success)
+![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
+
 规则驱动的目录整理器 —— 专治乱成一锅粥的「下载」/「桌面」/微信接收目录。
 
 - **默认 dry-run**：先看计划再动手，不指定 `--apply` 绝不移动任何文件
@@ -76,6 +82,18 @@ $ python -m dir_tidy tidy ./messy --undo
 ```bash
 python -m unittest discover -s tests
 # Ran 18 tests ... OK
+```
+
+
+## 📁 项目结构
+
+```
+dir-tidy/
+├── LICENSE
+├── dir_tidy/
+├── pyproject.toml
+├── tests/
+└── README.md
 ```
 
 ## License
