@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-18%20passing-success)
+![Tests](https://img.shields.io/badge/tests-22%20passing-success)
 ![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
@@ -11,7 +11,7 @@
 - **默认 dry-run**：先看计划再动手，不指定 `--apply` 绝不移动任何文件
 - **内置分类规则**：图片 / 视频 / 音频 / 文档 / 压缩包 / 程序与代码 / 字体，按扩展名归类
 - **自定义规则**：JSON 文件定义 glob 或正则规则（如 `regex:^发票.*\.pdf$ → 报销/`），用户规则永远优先于内置规则
-- **冲突安全**：目标重名自动加序号（`报告.pdf → 报告 (1).pdf`），绝不覆盖
+- **冲突安全**：目标重名自动加序号（`报告.pdf → 报告 (1).pdf`），递归同名文件也唯一分配，绝不覆盖
 - **一键回滚**：每次应用写入 `.dir-tidy/undo-*.json` 清单，`--undo` 完整还原（含清理空分类目录）
 - **递归 / 排除 / 兜底**：`--recursive` 连子目录一起整理（自动跳过隐藏目录），`--exclude` 排除下载临时文件，`--move-others` 给未命中文件一个去处
 
@@ -81,7 +81,11 @@ $ python -m dir_tidy tidy ./messy --undo
 
 ```bash
 python -m unittest discover -s tests
-# Ran 18 tests ... OK
+# Ran 22 tests ... OK
+
+python -m pip install build twine
+python -m build
+python -m twine check dist/*
 ```
 
 
@@ -89,7 +93,10 @@ python -m unittest discover -s tests
 
 ```
 dir-tidy/
+├── .github/workflows/
 ├── LICENSE
+├── MANIFEST.in
+├── CHANGELOG.md
 ├── dir_tidy/
 ├── pyproject.toml
 ├── tests/

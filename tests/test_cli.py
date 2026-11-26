@@ -1,17 +1,17 @@
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
 PY = sys.executable
 
 
 def run_cli(*args, cwd=None, expect=0):
     r = subprocess.run([PY, "-m", "dir_tidy", *args], capture_output=True,
-                       text=True, cwd=cwd or ROOT, encoding="utf-8")
+                       text=True, cwd=cwd, encoding="utf-8")
     if r.returncode != expect:
         raise AssertionError(f"exit={r.returncode} (expect {expect})\n"
                              f"stdout={r.stdout}\nstderr={r.stderr}")
@@ -77,8 +77,17 @@ class TestCli(unittest.TestCase):
 
     def test_version(self):
         r = subprocess.run([PY, "-m", "dir_tidy", "--version"],
-                           capture_output=True, text=True, cwd=ROOT, encoding="utf-8")
+                           capture_output=True, text=True, encoding="utf-8")
         self.assertIn("dir-tidy", r.stdout)
+
+    def test_utf8_output_under_legacy_windows_encoding(self):
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "cp1252"
+        env.pop("PYTHONUTF8", None)
+        r = subprocess.run([PY, "-m", "dir_tidy", "rules"],
+                           capture_output=True, env=env)
+        self.assertEqual(r.returncode, 0, r.stderr.decode("utf-8", errors="replace"))
+        self.assertIn("内置规则", r.stdout.decode("utf-8"))
 
 
 if __name__ == "__main__":

@@ -32,10 +32,11 @@ class Plan:
         return len(self.moves)
 
 
-def _collision_free(dst_dir: Path, name: str) -> Path:
+def _collision_free(dst_dir: Path, name: str, reserved: set[Path] | None = None) -> Path:
     """目标重名时自动加序号：报告.pdf → 报告 (1).pdf。"""
+    reserved = reserved or set()
     candidate = dst_dir / name
-    if not candidate.exists():
+    if not candidate.exists() and candidate not in reserved:
         return candidate
     stem, suffix = Path(name).stem, Path(name).suffix
     m = re.match(r"^(.*) \((\d+)\)$", stem)
@@ -43,7 +44,7 @@ def _collision_free(dst_dir: Path, name: str) -> Path:
     while True:
         n += 1
         candidate = dst_dir / f"{base} ({n}){suffix}"
-        if not candidate.exists():
+        if not candidate.exists() and candidate not in reserved:
             return candidate
 
 
@@ -66,6 +67,7 @@ def plan(
     rules: list[Rule] = load_rules(user_rules)
     excl = [e.strip().lower() for e in exclude.split(",") if e.strip()]
     p = Plan(root=root)
+    reserved: set[Path] = set()
     dest_names = {r.dest for r in rules} | ({move_unmatched} if move_unmatched else set())
 
     candidates = list(root.iterdir())
@@ -91,14 +93,17 @@ def plan(
         rule = match_first(path.name, rules)
         if rule is None:
             if move_unmatched:
-                p.moves.append(MoveItem(path, _collision_free(root / move_unmatched, path.name),
-                                        "未命中", move_unmatched))
+                dst = _collision_free(root / move_unmatched, path.name, reserved)
+                reserved.add(dst)
+                p.moves.append(MoveItem(path, dst, "未命中", move_unmatched))
             else:
                 p.skipped.append((path, "未命中任何规则"))
             continue
         if path.parent == root / rule.dest:
             continue  # 已在目标位置
-        p.moves.append(MoveItem(path, _collision_free(root / rule.dest, path.name), rule.name, rule.dest))
+        dst = _collision_free(root / rule.dest, path.name, reserved)
+        reserved.add(dst)
+        p.moves.append(MoveItem(path, dst, rule.name, rule.dest))
     return p
 
 
@@ -109,6 +114,18 @@ def fnmatch_like(name: str, pattern: str) -> bool:
 
 def apply(p: Plan) -> Path:
     """执行计划：移动文件并写入回滚清单。返回清单路径。"""
+    destinations: set[Path] = set()
+    for item in p.moves:
+        if item.src.resolve() == item.dst.resolve():
+            continue
+        if not item.src.exists():
+            raise FileNotFoundError(str(item.src))
+        if item.dst in destinations:
+            raise FileExistsError(f"目标重复：{item.dst}")
+        if item.dst.exists():
+            raise FileExistsError(f"目标已存在：{item.dst}")
+        destinations.add(item.dst)
+
     p.root.mkdir(parents=True, exist_ok=True)
     state = p.root / STATE_DIR
     state.mkdir(exist_ok=True)

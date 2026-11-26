@@ -29,7 +29,15 @@ def _load_user_rules(path: str) -> list[dict]:
     return rules
 
 
+def _configure_standard_streams() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
+
+
 def main(argv: list[str] | None = None) -> int:
+    _configure_standard_streams()
     ap = argparse.ArgumentParser(
         prog="dirtidy",
         description="规则驱动的目录整理器：预览 → 应用 → 可回滚",

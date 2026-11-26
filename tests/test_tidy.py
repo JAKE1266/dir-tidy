@@ -82,6 +82,45 @@ class TestPlan(unittest.TestCase):
         self.assertEqual((self.root / "图片" / "a.jpg").read_text(encoding="utf-8"), "old")
         self.assertNotEqual((self.root / "图片" / "a (1).jpg").read_text(encoding="utf-8"), "old")
 
+    def test_recursive_same_name_files_get_unique_targets(self):
+        touch(self.root, "one/report.pdf", "first")
+        touch(self.root, "two/report.pdf", "second")
+        p = plan(self.root, recursive=True)
+        moves = [m for m in p.moves if m.src.name == "report.pdf"]
+        self.assertEqual(len(moves), 2)
+        self.assertEqual(len({m.dst for m in moves}), 2)
+        apply(p)
+        contents = {
+            path.read_text(encoding="utf-8")
+            for path in (self.root / "文档").glob("report*.pdf")
+        }
+        self.assertEqual(contents, {"first", "second"})
+
+    def test_move_unmatched_same_name_files_get_unique_targets(self):
+        touch(self.root, "one/same.bin", "first")
+        touch(self.root, "two/same.bin", "second")
+        p = plan(self.root, recursive=True, move_unmatched="其他")
+        moves = [m for m in p.moves if m.src.name == "same.bin"]
+        self.assertEqual(len(moves), 2)
+        self.assertEqual(len({m.dst for m in moves}), 2)
+        apply(p)
+        contents = {
+            path.read_text(encoding="utf-8")
+            for path in (self.root / "其他").glob("same*.bin")
+        }
+        self.assertEqual(contents, {"first", "second"})
+
+    def test_apply_refuses_destination_created_after_plan(self):
+        p = plan(self.root)
+        target = self.root / "图片" / "a.jpg"
+        target.parent.mkdir()
+        target.write_text("new", encoding="utf-8")
+        with self.assertRaises(FileExistsError):
+            apply(p)
+        self.assertEqual((self.root / "a.jpg").read_text(encoding="utf-8"), "x")
+        self.assertEqual(target.read_text(encoding="utf-8"), "new")
+        self.assertFalse((self.root / ".dir-tidy").exists())
+
     def test_recursive_skips_dest_and_hidden(self):
         touch(self.root, "子目录/nested.png")
         touch(self.root, ".隐藏/secret.jpg")

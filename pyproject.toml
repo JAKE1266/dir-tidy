@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dir-tidy"
-version = "0.1.0"
+version = "0.1.1"
 description = "规则驱动的目录整理器：dry-run 预览、自定义规则、冲突安全、一键回滚"
 readme = "README.md"
 requires-python = ">=3.8"
